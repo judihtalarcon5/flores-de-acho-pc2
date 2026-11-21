@@ -1,0 +1,43 @@
+name: Verificación continua
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar API
+        working-directory: api
+        run: npm install
+      - name: Pruebas API
+        working-directory: api
+        run: npm test
+      - name: Auditoría dependencias API
+        working-directory: api
+        run: npm audit --audit-level=high
+      - name: Instalar frontend
+        working-directory: web
+        run: npm install
+      - name: Compilar frontend
+        working-directory: web
+        run: npm run build
+      - name: Auditoría dependencias frontend
+        working-directory: web
+        run: npm audit --audit-level=high
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
